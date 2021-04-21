@@ -25,8 +25,9 @@
     function get_wordpress_metrics(){
         $result="";
         $result.="# HELP wp_users_total Total number of users.\n";
-        $result.="# TYPE wp_users_total counter\n";
-        $result.="wp_users_total 4\n";
+        $result.="# TYPE wp_users_total gauge\n";
+        $users=count_users();
+        $result.="wp_users_total ".$users['total_users']."\n";
 
         $posts=wp_count_posts();
 
