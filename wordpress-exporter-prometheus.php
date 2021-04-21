@@ -30,15 +30,16 @@
         $result.="wp_users_total ".$users['total_users']."\n";
 
         $posts=wp_count_posts();
-
         $n_posts_pub=$posts->publish;
         $n_posts_dra=$posts->draft;
         $n_pages=wp_count_posts('page');
 
+        $result.="# HELP wp_posts_published_total Total number of posts published.\n";
+        $result.="# TYPE wp_posts_published_total gauge\n";
         $result.='wp_posts_total{status="published"} '.$n_posts_pub."\n";
 
-        $result.="# HELP wp_posts_draft_total Total number of posts published.\n";
-        $result.="# TYPE wp_posts_draft_total counter\n";
+        $result.="# HELP wp_posts_draft_total Total number of posts drafted.\n";
+        $result.="# TYPE wp_posts_draft_total gauge\n";
         $result.='wp_posts_total{status="draft"} '.$n_posts_dra."\n";
 
         $result.="# HELP wp_pages_total Total number of posts published.\n";
