@@ -6,7 +6,7 @@
     * Description:  This Wordpress plugin exports metrics for prometheus to scrape 'em
     * Author: Nicolas Reymond
     * Author URI: https://github.com/nicolasreymond
-    * Version: 0.1
+    * Version: 0.2
     */
      
     function my_awesome_func( $data ) {
@@ -29,6 +29,27 @@
         $users=count_users();
         $result.="wp_users_total ".$users['total_users']."\n";
 
+        $result.="# TYPE wc_product_by_category gauge\n";
+        $result.="# HELP wc_product_by_category Total of product for each categories.\n";
+        $all_cats=product_cats();
+        foreach ($all_cats as $cat) {
+            $all_ids = get_posts( array(
+                'post_type' => 'product',
+                'numberposts' => -1,
+                'post_status' => 'publish',
+                'fields' => 'ids',
+                'tax_query' => array(
+                    array(
+                        'taxonomy' => 'product_cat',
+                        'field' => 'slug',
+                        'terms' => $cat, /*category name*/
+                        'operator' => 'IN',
+                        )
+                    ),
+                )
+            );
+            $result.= "wc_product_by_category{category=\"".$cat."\"} ". count($all_ids). "\n";  
+        }
         $posts=wp_count_posts();
         $n_posts_pub=$posts->publish;
         $n_posts_dra=$posts->draft;
@@ -63,3 +84,15 @@
         return $served;
     }
     add_filter( 'rest_pre_serve_request', 'multiformat_rest_pre_serve_request', 10, 4 );
+
+function product_cats() {
+    $options = array();
+
+    $categories = get_terms( array( 'taxonomy' => 'product_cat' ) );
+    // var_dump($categories);
+    foreach( $categories as $category ) {
+        $options[$category->term_id] = $category->slug;
+    }
+    // return array('options'=>$options);
+    return $options;
+}
