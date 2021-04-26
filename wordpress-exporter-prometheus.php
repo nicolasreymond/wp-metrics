@@ -24,10 +24,15 @@
 
     function get_wordpress_metrics(){
         $result="";
-        $result.="# HELP wp_users_total Total number of users.\n";
         $result.="# TYPE wp_users_total gauge\n";
+        $result.="# HELP wp_users_total Total number of users.\n";
         $users=count_users();
         $result.="wp_users_total ".$users['total_users']."\n";
+        
+        $result.="# TYPE wc_total_orders gauge\n";
+        $result.="# HELP wc_total_orders Total number of woocomerce order.\n";
+        $total_order = new WP_Query(array('post_type'=>'shop_order','post_status'=> array('wc-completed', 'wc-processing')));
+        $result.="wc_total_orders ".$total_order->found_posts."\n";
 
         $result.="# TYPE wc_product_by_category gauge\n";
         $result.="# HELP wc_product_by_category Total of product for each categories.\n";
@@ -50,10 +55,12 @@
             );
             $result.= "wc_product_by_category{category=\"".$cat."\"} ". count($all_ids). "\n";  
         }
+        
         $posts=wp_count_posts();
-        $n_posts_pub=$posts->publish;
-        $n_posts_dra=$posts->draft;
-        $n_pages=wp_count_posts('page');
+        $posts_pub=$posts->publish;
+        $posts_dra=$posts->draft;
+        $pages=wp_count_posts('page');
+
 
         $media_storage_used=get_space_used();
         $result.="# TYPE wp_posts_published_total gauge\n";
@@ -61,16 +68,14 @@
         $result.="wp_upload_free_storage ".$media_storage_used."\n";
 
         $result.="# TYPE wp_posts_published_total gauge\n";
-        $result.='wp_posts_total{status="published"} '.$n_posts_pub."\n";
+        $result.="# HELP wp_posts_published_total Total number of posts.\n";
+        $result.='wp_posts_total{status="published"} '.$posts_pub."\n";
+        $result.='wp_posts_total{status="draft"} '.$posts_dra."\n";
 
-        $result.="# HELP wp_posts_draft_total Total number of posts drafted.\n";
-        $result.="# TYPE wp_posts_draft_total gauge\n";
-        $result.='wp_posts_total{status="draft"} '.$n_posts_dra."\n";
-
-        $result.="# HELP wp_pages_total Total number of posts published.\n";
         $result.="# TYPE wp_pages_total counter\n";
-        $result.='wp_pages_total{status="published"} '.$n_pages->publish."\n";
-        $result.='wp_pages_total{status="draft"} '.$n_pages->draft."\n";
+        $result.="# HELP wp_pages_total Total number of posts published.\n";
+        $result.='wp_pages_total{status="published"} '.$pages->publish."\n";
+        $result.='wp_pages_total{status="draft"} '.$pages->draft."\n";
 
         return $result;
     }
