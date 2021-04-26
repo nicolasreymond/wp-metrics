@@ -55,7 +55,11 @@
         $n_posts_dra=$posts->draft;
         $n_pages=wp_count_posts('page');
 
+        $media_storage_used=get_space_used();
+        $result.="# TYPE wp_posts_published_total gauge\n";
         $result.="# HELP wp_posts_published_total Total number of posts published.\n";
+        $result.="wp_upload_free_storage ".$media_storage_used."\n";
+
         $result.="# TYPE wp_posts_published_total gauge\n";
         $result.='wp_posts_total{status="published"} '.$n_posts_pub."\n";
 
@@ -85,6 +89,24 @@
     }
     add_filter( 'rest_pre_serve_request', 'multiformat_rest_pre_serve_request', 10, 4 );
 
+    function get_space_used() {
+    /**
+     * Filters the amount of storage space used by the current site, in megabytes.
+     *
+     * @since 3.5.0
+     *
+     * @param int|false $space_used The amount of used space, in megabytes. Default false.
+     */
+    $space_used = apply_filters( 'pre_get_space_used', false );
+ 
+    if ( false === $space_used ) {
+        $upload_dir = wp_upload_dir();
+        $space_used = get_dirsize( $upload_dir['basedir'] ) / MB_IN_BYTES;
+    }
+ 
+    return $space_used;
+}
+   
 function product_cats() {
     $options = array();
 
