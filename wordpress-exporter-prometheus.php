@@ -6,9 +6,11 @@
     * Description:  This Wordpress plugin exports metrics for prometheus to scrape 'em
     * Author: Nicolas Reymond
     * Author URI: https://github.com/nicolasreymond
-    * Version: 0.2
+    * Version: 0.3
     */
      
+    include "wp-metrics-admin.php";
+
     function my_awesome_func( $data ) {
         return "";
     }
