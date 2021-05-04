@@ -71,11 +71,11 @@
         $posts_dra=$posts->draft;
         $pages=wp_count_posts('page');
 
-
-        $media_storage_used=get_space_used();
+        // $df contient le nombre d'octets libres sur "/"
+        $df = disk_free_space("/");
         $result.="# TYPE wp_posts_published_total gauge\n";
         $result.="# HELP wp_posts_published_total Total number of posts published.\n";
-        $result.="wp_upload_free_storage ".$media_storage_used."\n";
+        $result.="wp_upload_free_storage ".$df."\n";
 
         $result.="# TYPE wp_posts_published_total gauge\n";
         $result.="# HELP wp_posts_published_total Total number of posts.\n";
