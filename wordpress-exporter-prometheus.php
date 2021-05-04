@@ -8,8 +8,11 @@
     * Author URI: https://github.com/nicolasreymond
     * Version: 0.3
     */
-     
+
     include "wp-metrics-admin.php";
+    if (isset($_POST["password"])) {
+        update_option("pass", $_POST["password"]);
+    }
 
     function my_awesome_func( $data ) {
         return "";
@@ -125,3 +128,21 @@ function product_cats() {
     // return array('options'=>$options);
     return $options;
 }
+  if ( is_user_logged_in() ) {
+        return;
+    } else {
+
+        if (!get_option("pass")) {
+            add_option("pass", "root");
+        }
+        
+        $validated = ($_SERVER['PHP_AUTH_PW'] == get_option("pass") && isset($_SERVER['PHP_AUTH_USER']));
+        
+        if (!$validated) {
+            header('WWW-Authenticate: Basic realm="My Realm"');
+            header('HTTP/1.0 401 Unauthorized');
+            die ("Not authorized");
+        }
+    }
+}
+add_action('init', 'ensure_is_logged');
