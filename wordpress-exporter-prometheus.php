@@ -39,6 +39,11 @@
         $total_order = new WP_Query(array('post_type'=>'shop_order','post_status'=> array('wc-completed', 'wc-processing')));
         $result.="wc_total_orders ".$total_order->found_posts."\n";
 
+        $last_rev_id = get_last_revivion_id();
+        $result.="# TYPE wp_last_rev_id gauge\n";
+        $result.="# HELP wp_last_rev_id Last id of revision post.\n";
+        $result.="wp_last_rev_id ".$last_rev_id."\n"; 
+        
         $result.="# TYPE wc_product_by_category gauge\n";
         $result.="# HELP wc_product_by_category Total of product for each categories.\n";
         $all_cats=product_cats();
