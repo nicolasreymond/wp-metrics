@@ -128,6 +128,13 @@ function product_cats() {
     // return array('options'=>$options);
     return $options;
 }
+function ensure_is_logged()
+{
+    $url = $_SERVER['REQUEST_URI'];
+    if (!preg_match("/\/metrics$/", $url)) {
+        return;
+    }   
+  
   if ( is_user_logged_in() ) {
         return;
     } else {
