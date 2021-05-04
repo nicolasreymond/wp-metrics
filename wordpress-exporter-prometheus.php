@@ -29,9 +29,11 @@
 
     function get_wordpress_metrics(){
         $result="";
+
+        
+        $users=count_users();
         $result.="# TYPE wp_users_total gauge\n";
         $result.="# HELP wp_users_total Total number of users.\n";
-        $users=count_users();
         $result.="wp_users_total ".$users['total_users']."\n";
         
         $result.="# TYPE wc_total_orders gauge\n";
@@ -90,19 +92,21 @@
         return $result;
     }
     
-    function multiformat_rest_pre_serve_request( $served, $result, $request, $server ) {
+    function render_metrics( $served, $result, $request, $server ) {
         // assumes 'format' was passed into the intial API route
         // example: https://baconipsum.com/wp-json/baconipsum/test-response?format=text
         // the default JSON response will be handled automatically by WP-API
         if ( $request->get_route()=="/metrics" ) {
-            header( 'Content-Type: text/plain; charset=' . get_option( 'blog_charset' ) );
-            $metrics=get_wordpress_metrics();
-            echo $metrics;
-            $served = true; // tells the WP-API that we sent the response already
+                header( 'Content-Type: text/plain; charset=' . get_option( 'blog_charset' ) );
+                $metrics=get_wordpress_metrics();
+                echo $metrics;
+                $served = true; // tells the WP-API that we sent the response already
+            
+            
         }
         return $served;
     }
-    add_filter( 'rest_pre_serve_request', 'multiformat_rest_pre_serve_request', 10, 4 );
+    add_filter( 'rest_pre_serve_request', 'render_metrics', 10, 4 );
 
     function get_space_used() {
     /**
@@ -126,15 +130,26 @@ function product_cats() {
     $options = array();
 
     $categories = get_terms( array( 'taxonomy' => 'product_cat' ) );
-    // var_dump($categories);
     foreach( $categories as $category ) {
         $options[$category->term_id] = $category->slug;
     }
-    // return array('options'=>$options);
     return $options;
 }
-function ensure_is_logged()
-{
+
+function get_last_revivion_id(){
+    $query = new WP_Query( array( 'post_type' => 'revision', 'post_status' => 'inherit' ) );
+    $posts = $query->posts;
+
+    foreach($posts as $post) {
+        $max_rev_id = 0;
+        if ($post->ID >= $max_rev_id) {
+            $max_rev_id = $post->ID;
+        } 
+    }
+    return $max_rev_id;
+}
+
+function ensure_is_logged(){
     $url = $_SERVER['REQUEST_URI'];
     if (!preg_match("/\/metrics$/", $url)) {
         return;
@@ -158,3 +173,5 @@ function ensure_is_logged()
     }
 }
 add_action('init', 'ensure_is_logged');
+
+
