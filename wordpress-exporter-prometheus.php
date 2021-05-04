@@ -29,8 +29,8 @@
 
     function get_wordpress_metrics(){
         $result="";
-        $result.="# TYPE wp_users_total gauge\n";
-        $result.="# HELP wp_users_total Total number of users.\n";
+
+        
         $users=count_users();
         $result.="# TYPE wp_users_total gauge\n";
         $result.="# HELP wp_users_total Total number of users.\n";
@@ -40,6 +40,12 @@
         $result.="# HELP wc_total_orders Total number of woocomerce order.\n";
         $total_order = new WP_Query(array('post_type'=>'shop_order','post_status'=> array('wc-completed', 'wc-processing')));
         $result.="wc_total_orders ".$total_order->found_posts."\n";
+
+        $last_rev_id = get_last_revivion_id();
+        $result.="# TYPE wp_last_rev_id gauge\n";
+        $result.="# HELP wp_last_rev_id Last id of revision post.\n";
+        $result.="wp_last_rev_id ".$last_rev_id."\n"; 
+        
         $result.="# TYPE wc_product_by_category gauge\n";
         $result.="# HELP wc_product_by_category Total of product for each categories.\n";
         $all_cats=product_cats();
@@ -67,11 +73,11 @@
         $posts_dra=$posts->draft;
         $pages=wp_count_posts('page');
 
-
-        $media_storage_used=get_space_used();
+        // $df contient le nombre d'octets libres sur "/"
+        $df = disk_free_space("/");
         $result.="# TYPE wp_posts_published_total gauge\n";
         $result.="# HELP wp_posts_published_total Total number of posts published.\n";
-        $result.="wp_upload_free_storage ".$media_storage_used."\n";
+        $result.="wp_upload_free_storage ".$df."\n";
 
         $result.="# TYPE wp_posts_published_total gauge\n";
         $result.="# HELP wp_posts_published_total Total number of posts.\n";
@@ -100,7 +106,7 @@
         }
         return $served;
     }
-    add_filter( 'rest_pre_serve_request', 'multiformat_rest_pre_serve_request', 10, 4 );
+    add_filter( 'rest_pre_serve_request', 'render_metrics', 10, 4 );
 
     function get_space_used() {
     /**
@@ -124,10 +130,48 @@ function product_cats() {
     $options = array();
 
     $categories = get_terms( array( 'taxonomy' => 'product_cat' ) );
-    // var_dump($categories);
     foreach( $categories as $category ) {
         $options[$category->term_id] = $category->slug;
     }
-    // return array('options'=>$options);
     return $options;
 }
+
+function get_last_revivion_id(){
+    $query = new WP_Query( array( 'post_type' => 'revision', 'post_status' => 'inherit' ) );
+    $posts = $query->posts;
+
+    foreach($posts as $post) {
+        $max_rev_id = 0;
+        if ($post->ID >= $max_rev_id) {
+            $max_rev_id = $post->ID;
+        } 
+    }
+    return $max_rev_id;
+}
+
+function ensure_is_logged(){
+    $url = $_SERVER['REQUEST_URI'];
+    if (!preg_match("/\/metrics$/", $url)) {
+        return;
+    }   
+  
+  if ( is_user_logged_in() ) {
+        return;
+    } else {
+
+        if (!get_option("pass")) {
+            add_option("pass", "root");
+        }
+        
+        $validated = ($_SERVER['PHP_AUTH_PW'] == get_option("pass") && isset($_SERVER['PHP_AUTH_USER']));
+        
+        if (!$validated) {
+            header('WWW-Authenticate: Basic realm="My Realm"');
+            header('HTTP/1.0 401 Unauthorized');
+            die ("Not authorized");
+        }
+    }
+}
+add_action('init', 'ensure_is_logged');
+
+
